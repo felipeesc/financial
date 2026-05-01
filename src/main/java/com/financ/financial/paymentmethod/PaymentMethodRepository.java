@@ -2,5 +2,10 @@ package com.financ.financial.paymentmethod;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, Long> {
+import java.util.List;
+import java.util.UUID;
+
+public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UUID> {
+
+    List<PaymentMethod> findByUserId(UUID userId);
 }
