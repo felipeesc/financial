@@ -1,6 +1,8 @@
 package com.financ.financial.expense;
 
+import com.financ.financial.category.Category;
 import com.financ.financial.category.CategoryRepository;
+import com.financ.financial.paymentmethod.PaymentMethod;
 import com.financ.financial.paymentmethod.PaymentMethodRepository;
 import com.financ.financial.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,10 +38,8 @@ public class ExpenseService {
     public Expense create(UUID userId, ExpenseRequest request) {
         Expense expense = Expense.builder()
                 .user(userRepository.getReferenceById(userId))
-                .category(request.categoryId() != null
-                        ? categoryRepository.getReferenceById(request.categoryId()) : null)
-                .paymentMethod(request.paymentMethodId() != null
-                        ? paymentMethodRepository.getReferenceById(request.paymentMethodId()) : null)
+                .category(resolveCategory(request.categoryId(), userId))
+                .paymentMethod(resolvePaymentMethod(request.paymentMethodId(), userId))
                 .description(request.description())
                 .amount(request.amount())
                 .expenseDate(request.expenseDate())
@@ -50,10 +50,8 @@ public class ExpenseService {
     @Transactional
     public Expense update(UUID expenseId, UUID userId, ExpenseRequest request) {
         Expense expense = findOwned(expenseId, userId);
-        expense.setCategory(request.categoryId() != null
-                ? categoryRepository.getReferenceById(request.categoryId()) : null);
-        expense.setPaymentMethod(request.paymentMethodId() != null
-                ? paymentMethodRepository.getReferenceById(request.paymentMethodId()) : null);
+        expense.setCategory(resolveCategory(request.categoryId(), userId));
+        expense.setPaymentMethod(resolvePaymentMethod(request.paymentMethodId(), userId));
         expense.setDescription(request.description());
         expense.setAmount(request.amount());
         expense.setExpenseDate(request.expenseDate());
@@ -81,5 +79,19 @@ public class ExpenseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
         return expense;
+    }
+
+    private Category resolveCategory(UUID categoryId, UUID userId) {
+        if (categoryId == null) return null;
+        return categoryRepository.findByIdAndUserId(categoryId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Category not found or does not belong to user"));
+    }
+
+    private PaymentMethod resolvePaymentMethod(UUID paymentMethodId, UUID userId) {
+        if (paymentMethodId == null) return null;
+        return paymentMethodRepository.findByIdAndUserId(paymentMethodId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Payment method not found or does not belong to user"));
     }
 }

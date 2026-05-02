@@ -1,6 +1,8 @@
 package com.financ.financial.paymentmethod;
 
 import com.financ.financial.user.AuthenticatedUserResolver;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -17,14 +19,17 @@ public class PaymentMethodController {
     private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
-    public List<PaymentMethod> findAll() {
-        return paymentMethodService.findAll(userResolver.resolveId());
+    public List<PaymentMethodResponse> findAll() {
+        return paymentMethodService.findAll(userResolver.resolveId()).stream()
+                .map(PaymentMethodResponse::from)
+                .toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PaymentMethod create(@RequestBody PaymentMethodRequest request) {
-        return paymentMethodService.create(userResolver.resolveId(), request.name());
+    public PaymentMethodResponse create(@Valid @RequestBody PaymentMethodRequest request) {
+        return PaymentMethodResponse.from(
+                paymentMethodService.create(userResolver.resolveId(), request.name()));
     }
 
     @DeleteMapping("/{id}")
@@ -33,5 +38,5 @@ public class PaymentMethodController {
         paymentMethodService.delete(id, userResolver.resolveId());
     }
 
-    record PaymentMethodRequest(String name) {}
+    record PaymentMethodRequest(@NotBlank String name) {}
 }

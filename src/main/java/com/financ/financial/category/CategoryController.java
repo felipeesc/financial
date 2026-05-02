@@ -1,9 +1,10 @@
 package com.financ.financial.category;
 
 import com.financ.financial.user.AuthenticatedUserResolver;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,14 +19,17 @@ public class CategoryController {
     private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
-    public List<Category> findAll() {
-        return categoryService.findAll(userResolver.resolveId());
+    public List<CategoryResponse> findAll() {
+        return categoryService.findAll(userResolver.resolveId()).stream()
+                .map(CategoryResponse::from)
+                .toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Category create(@RequestBody CategoryRequest request) {
-        return categoryService.create(userResolver.resolveId(), request.name(), request.color());
+    public CategoryResponse create(@Valid @RequestBody CategoryRequest request) {
+        return CategoryResponse.from(
+                categoryService.create(userResolver.resolveId(), request.name(), request.color()));
     }
 
     @DeleteMapping("/{id}")
@@ -34,5 +38,5 @@ public class CategoryController {
         categoryService.delete(id, userResolver.resolveId());
     }
 
-    record CategoryRequest(String name, String color) {}
+    record CategoryRequest(@NotBlank String name, String color) {}
 }

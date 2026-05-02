@@ -3,6 +3,8 @@ package com.financ.financial.fixedcost;
 import com.financ.financial.user.AuthenticatedUserResolver;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -22,23 +24,25 @@ public class FixedCostController {
     private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
-    public List<FixedCost> findAll() {
-        return fixedCostService.findAll(userResolver.resolveId());
+    public List<FixedCostResponse> findAll() {
+        return fixedCostService.findAll(userResolver.resolveId()).stream()
+                .map(FixedCostResponse::from)
+                .toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FixedCost create(@Valid @RequestBody CreateRequest request) {
-        return fixedCostService.create(
-                userResolver.resolveId(), request.name(), request.amount(), request.dueDay());
+    public FixedCostResponse create(@Valid @RequestBody CreateRequest request) {
+        return FixedCostResponse.from(fixedCostService.create(
+                userResolver.resolveId(), request.name(), request.amount(), request.dueDay()));
     }
 
     @PutMapping("/{id}")
-    public FixedCost update(@PathVariable UUID id,
-                            @Valid @RequestBody UpdateRequest request) {
-        return fixedCostService.update(
+    public FixedCostResponse update(@PathVariable UUID id,
+                                    @Valid @RequestBody UpdateRequest request) {
+        return FixedCostResponse.from(fixedCostService.update(
                 id, userResolver.resolveId(),
-                request.name(), request.amount(), request.dueDay(), request.active());
+                request.name(), request.amount(), request.dueDay(), request.active()));
     }
 
     @DeleteMapping("/{id}")
@@ -50,13 +54,13 @@ public class FixedCostController {
     record CreateRequest(
             @NotBlank String name,
             @NotNull @DecimalMin("0.01") BigDecimal amount,
-            Integer dueDay
+            @Min(1) @Max(31) Integer dueDay
     ) {}
 
     record UpdateRequest(
             @NotBlank String name,
             @NotNull @DecimalMin("0.01") BigDecimal amount,
-            Integer dueDay,
+            @Min(1) @Max(31) Integer dueDay,
             Boolean active
     ) {}
 }
