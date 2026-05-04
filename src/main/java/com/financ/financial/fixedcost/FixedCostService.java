@@ -20,6 +20,11 @@ public class FixedCostService {
 
     @Transactional(readOnly = true)
     public List<FixedCost> findAll(UUID userId) {
+        return fixedCostRepository.findByUserIdOrderByDueDayAscNameAsc(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FixedCost> findAllActive(UUID userId) {
         return fixedCostRepository.findByUserIdAndActiveTrue(userId);
     }
 

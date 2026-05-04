@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface FixedCostRepository extends JpaRepository<FixedCost, UUID> {
 
     List<FixedCost> findByUserIdAndActiveTrue(UUID userId);
+
+    List<FixedCost> findByUserIdOrderByDueDayAscNameAsc(UUID userId);
 }
