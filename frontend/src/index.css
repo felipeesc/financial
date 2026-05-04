@@ -1,0 +1,49 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+/* App main content area */
+.app-main {
+  padding: 2rem;
+}
+
+/* Navbar: desktop links visible, hamburger hidden */
+.nav-links-desktop {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+}
+
+@media (max-width: 680px) {
+  .app-main {
+    padding: 1rem;
+  }
+
+  .nav-links-desktop {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .logout-desktop {
+    display: none;
+  }
+}
