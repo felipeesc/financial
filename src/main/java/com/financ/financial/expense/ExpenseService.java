@@ -2,8 +2,6 @@ package com.financ.financial.expense;
 
 import com.financ.financial.category.Category;
 import com.financ.financial.category.CategoryRepository;
-import com.financ.financial.paymentmethod.PaymentMethod;
-import com.financ.financial.paymentmethod.PaymentMethodRepository;
 import com.financ.financial.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,7 +20,6 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
-    private final PaymentMethodRepository paymentMethodRepository;
 
     @Transactional(readOnly = true)
     public List<ExpenseResponse> findByMonth(UUID userId, YearMonth month) {
@@ -39,7 +36,7 @@ public class ExpenseService {
         Expense expense = Expense.builder()
                 .user(userRepository.getReferenceById(userId))
                 .category(resolveCategory(request.categoryId(), userId))
-                .paymentMethod(resolvePaymentMethod(request.paymentMethodId(), userId))
+                .paymentMethod(request.paymentMethod())
                 .description(request.description())
                 .amount(request.amount())
                 .expenseDate(request.expenseDate())
@@ -51,7 +48,7 @@ public class ExpenseService {
     public Expense update(UUID expenseId, UUID userId, ExpenseRequest request) {
         Expense expense = findOwned(expenseId, userId);
         expense.setCategory(resolveCategory(request.categoryId(), userId));
-        expense.setPaymentMethod(resolvePaymentMethod(request.paymentMethodId(), userId));
+        expense.setPaymentMethod(request.paymentMethod());
         expense.setDescription(request.description());
         expense.setAmount(request.amount());
         expense.setExpenseDate(request.expenseDate());
@@ -88,10 +85,5 @@ public class ExpenseService {
                         "Category not found or does not belong to user"));
     }
 
-    private PaymentMethod resolvePaymentMethod(UUID paymentMethodId, UUID userId) {
-        if (paymentMethodId == null) return null;
-        return paymentMethodRepository.findByIdAndUserId(paymentMethodId, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Payment method not found or does not belong to user"));
-    }
+
 }

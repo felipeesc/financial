@@ -11,7 +11,7 @@ public record ExpenseRequest(
 
         UUID categoryId,
 
-        UUID paymentMethodId,
+        String paymentMethod,
 
         @NotNull
         String description,

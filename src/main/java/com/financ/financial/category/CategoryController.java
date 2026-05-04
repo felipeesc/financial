@@ -32,6 +32,13 @@ public class CategoryController {
                 categoryService.create(userResolver.resolveId(), request.name(), request.color()));
     }
 
+    @PutMapping("/{id}")
+    public CategoryResponse update(@PathVariable UUID id,
+                                   @Valid @RequestBody CategoryRequest request) {
+        return CategoryResponse.from(
+                categoryService.update(id, userResolver.resolveId(), request.name(), request.color()));
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {

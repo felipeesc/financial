@@ -18,7 +18,7 @@ public record ExpenseResponse(
                 e.getId(),
                 e.getCategory() != null ? e.getCategory().getName() : null,
                 e.getCategory() != null ? e.getCategory().getColor() : null,
-                e.getPaymentMethod() != null ? e.getPaymentMethod().getName() : null,
+                e.getPaymentMethod(),
                 e.getDescription(),
                 e.getAmount(),
                 e.getExpenseDate()

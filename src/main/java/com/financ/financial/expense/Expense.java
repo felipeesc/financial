@@ -1,7 +1,6 @@
 package com.financ.financial.expense;
 
 import com.financ.financial.category.Category;
-import com.financ.financial.paymentmethod.PaymentMethod;
 import com.financ.financial.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,9 +32,8 @@ public class Expense {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_method_id")
-    private PaymentMethod paymentMethod;
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
 
     @Column(nullable = false)
     private String description;

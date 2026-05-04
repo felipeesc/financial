@@ -31,6 +31,14 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
+    public Category update(UUID categoryId, UUID userId, String name, String color) {
+        Category category = categoryRepository.findByIdAndUserId(categoryId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        category.setName(name);
+        category.setColor(color != null ? color : "#6366f1");
+        return categoryRepository.save(category);
+    }
+
     public void delete(UUID categoryId, UUID userId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
