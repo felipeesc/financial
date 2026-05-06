@@ -1,6 +1,5 @@
 package com.financ.financial.category;
 
-import com.financ.financial.user.AuthenticatedUserResolver;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +15,10 @@ import java.util.UUID;
 public class CategoryController {
 
     private final CategoryService categoryService;
-    private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
     public List<CategoryResponse> findAll() {
-        return categoryService.findAll(userResolver.resolveId()).stream()
+        return categoryService.findAll().stream()
                 .map(CategoryResponse::from)
                 .toList();
     }
@@ -28,21 +26,19 @@ public class CategoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryResponse create(@Valid @RequestBody CategoryRequest request) {
-        return CategoryResponse.from(
-                categoryService.create(userResolver.resolveId(), request.name(), request.color()));
+        return CategoryResponse.from(categoryService.create(request.name(), request.color()));
     }
 
     @PutMapping("/{id}")
     public CategoryResponse update(@PathVariable UUID id,
                                    @Valid @RequestBody CategoryRequest request) {
-        return CategoryResponse.from(
-                categoryService.update(id, userResolver.resolveId(), request.name(), request.color()));
+        return CategoryResponse.from(categoryService.update(id, request.name(), request.color()));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
-        categoryService.delete(id, userResolver.resolveId());
+        categoryService.delete(id);
     }
 
     record CategoryRequest(@NotBlank String name, String color) {}

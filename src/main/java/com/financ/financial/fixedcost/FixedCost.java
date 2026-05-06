@@ -1,6 +1,7 @@
 package com.financ.financial.fixedcost;
 
 import com.financ.financial.user.User;
+import com.financ.financial.workspace.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,10 @@ public class FixedCost {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "workspace_id", nullable = false)
+    private Workspace workspace;
 
     @Column(nullable = false, length = 100)
     private String name;

@@ -1,5 +1,6 @@
 package com.financ.financial.auth;
 
+import com.financ.financial.workspace.WorkspaceFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final WorkspaceFilter workspaceFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -40,6 +42,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((req, res, e) ->
                                 res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(workspaceFilter, JwtFilter.class)
                 .build();
     }
 

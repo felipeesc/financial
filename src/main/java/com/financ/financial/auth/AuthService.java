@@ -4,6 +4,11 @@ import com.financ.financial.category.Category;
 import com.financ.financial.category.CategoryRepository;
 import com.financ.financial.user.User;
 import com.financ.financial.user.UserRepository;
+import com.financ.financial.workspace.Workspace;
+import com.financ.financial.workspace.WorkspaceMember;
+import com.financ.financial.workspace.WorkspaceMemberRepository;
+import com.financ.financial.workspace.WorkspaceRepository;
+import com.financ.financial.workspace.WorkspaceRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +29,8 @@ public class AuthService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final CategoryRepository categoryRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     private static final List<String[]> DEFAULT_CATEGORIES = List.of(
             new String[]{"Alimentação",       "#10b981"},
@@ -77,9 +84,20 @@ public class AuthService implements UserDetailsService {
                 .password(passwordEncoder.encode(rawPassword))
                 .build());
 
+        // Create default "Pessoal" workspace for the new user
+        Workspace workspace = workspaceRepository.save(
+                Workspace.builder().name("Pessoal").owner(user).build());
+
+        workspaceMemberRepository.save(WorkspaceMember.builder()
+                .workspace(workspace)
+                .user(user)
+                .role(WorkspaceRole.OWNER)
+                .build());
+
         List<Category> defaults = DEFAULT_CATEGORIES.stream()
                 .map(c -> Category.builder()
                         .user(user)
+                        .workspace(workspace)
                         .name(c[0])
                         .color(c[1])
                         .build())

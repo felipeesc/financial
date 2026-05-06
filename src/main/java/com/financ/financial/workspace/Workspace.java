@@ -1,7 +1,6 @@
-package com.financ.financial.category;
+package com.financ.financial.workspace;
 
 import com.financ.financial.user.User;
-import com.financ.financial.workspace.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,32 +8,25 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "workspaces")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Category {
+public class Workspace {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "workspace_id", nullable = false)
-    private Workspace workspace;
-
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(length = 7)
-    private String color;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

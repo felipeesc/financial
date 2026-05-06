@@ -1,6 +1,5 @@
 package com.financ.financial.loan;
 
-import com.financ.financial.user.AuthenticatedUserResolver;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -20,28 +19,24 @@ import java.util.UUID;
 public class LoanController {
 
     private final LoanService loanService;
-    private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
     public List<LoanResponse> findAll() {
-        return loanService.findAll(userResolver.resolveId()).stream()
-                .map(loan -> LoanResponse.from(loan,
-                        loanService.findPayments(loan.getId(), userResolver.resolveId())))
+        return loanService.findAll().stream()
+                .map(loan -> LoanResponse.from(loan, loanService.findPayments(loan.getId())))
                 .toList();
     }
 
     @GetMapping("/{id}")
     public LoanResponse findById(@PathVariable UUID id) {
-        UUID userId = userResolver.resolveId();
-        Loan loan = loanService.findOwned(id, userId);
-        return LoanResponse.from(loan, loanService.findPayments(id, userId));
+        Loan loan = loanService.findOwned(id);
+        return LoanResponse.from(loan, loanService.findPayments(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public LoanResponse create(@Valid @RequestBody CreateLoanRequest req) {
-        UUID userId = userResolver.resolveId();
-        Loan loan = loanService.create(userId,
+        Loan loan = loanService.create(
                 req.borrowerName(), req.borrowerCpf(),
                 req.principalAmount(), req.interestRate(),
                 req.userRate(), req.referrerRate(),
@@ -51,20 +46,19 @@ public class LoanController {
 
     @PatchMapping("/{id}/pay")
     public LoanResponse markAsPaid(@PathVariable UUID id) {
-        UUID userId = userResolver.resolveId();
-        Loan loan = loanService.markAsPaid(id, userId);
-        return LoanResponse.from(loan, loanService.findPayments(id, userId));
+        Loan loan = loanService.markAsPaid(id);
+        return LoanResponse.from(loan, loanService.findPayments(id));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
-        loanService.delete(id, userResolver.resolveId());
+        loanService.delete(id);
     }
 
     @GetMapping("/{id}/payments")
     public List<PaymentResponse> findPayments(@PathVariable UUID id) {
-        return loanService.findPayments(id, userResolver.resolveId()).stream()
+        return loanService.findPayments(id).stream()
                 .map(PaymentResponse::from)
                 .toList();
     }
@@ -73,18 +67,15 @@ public class LoanController {
     @ResponseStatus(HttpStatus.CREATED)
     public PaymentResponse registerPayment(@PathVariable UUID id,
                                            @Valid @RequestBody RegisterPaymentRequest req) {
-        return PaymentResponse.from(loanService.registerPayment(
-                id, userResolver.resolveId(),
-                req.paymentDate(), req.totalAmount(), req.notes()));
+        return PaymentResponse.from(
+                loanService.registerPayment(id, req.paymentDate(), req.totalAmount(), req.notes()));
     }
 
     @DeleteMapping("/{id}/payments/{paymentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePayment(@PathVariable UUID id, @PathVariable UUID paymentId) {
-        loanService.deletePayment(id, paymentId, userResolver.resolveId());
+        loanService.deletePayment(id, paymentId);
     }
-
-    // ── Request records ──────────────────────────────────────────────────────
 
     record CreateLoanRequest(
             @NotBlank String borrowerName,

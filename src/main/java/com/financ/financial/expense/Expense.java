@@ -2,6 +2,7 @@ package com.financ.financial.expense;
 
 import com.financ.financial.category.Category;
 import com.financ.financial.user.User;
+import com.financ.financial.workspace.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,10 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "workspace_id", nullable = false)
+    private Workspace workspace;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
