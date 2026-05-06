@@ -1,6 +1,9 @@
 package com.financ.financial.fixedcost;
 
-import com.financ.financial.user.UserRepository;
+import com.financ.financial.user.AuthenticatedUserResolver;
+import com.financ.financial.workspace.TenantContext;
+import com.financ.financial.workspace.WorkspaceRepository;
+import com.financ.financial.workspace.WorkspaceSecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,22 +19,27 @@ import java.util.UUID;
 public class FixedCostService {
 
     private final FixedCostRepository fixedCostRepository;
-    private final UserRepository userRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceSecurityService workspaceSecurity;
+    private final AuthenticatedUserResolver userResolver;
 
     @Transactional(readOnly = true)
-    public List<FixedCost> findAll(UUID userId) {
-        return fixedCostRepository.findByUserIdOrderByDueDayAscNameAsc(userId);
+    public List<FixedCost> findAll() {
+        return fixedCostRepository.findByWorkspaceIdOrderByDueDayAscNameAsc(
+                TenantContext.getWorkspaceId());
     }
 
     @Transactional(readOnly = true)
-    public List<FixedCost> findAllActive(UUID userId) {
-        return fixedCostRepository.findByUserIdAndActiveTrue(userId);
+    public List<FixedCost> findAllActive() {
+        return fixedCostRepository.findByWorkspaceIdAndActiveTrue(TenantContext.getWorkspaceId());
     }
 
     @Transactional
-    public FixedCost create(UUID userId, String name, BigDecimal amount, Integer dueDay) {
+    public FixedCost create(String name, BigDecimal amount, Integer dueDay) {
+        workspaceSecurity.requireWriteAccess();
         FixedCost fixedCost = FixedCost.builder()
-                .user(userRepository.getReferenceById(userId))
+                .user(userResolver.resolve())
+                .workspace(workspaceRepository.getReferenceById(TenantContext.getWorkspaceId()))
                 .name(name)
                 .amount(amount)
                 .dueDay(dueDay)
@@ -41,9 +49,10 @@ public class FixedCostService {
     }
 
     @Transactional
-    public FixedCost update(UUID fixedCostId, UUID userId,
-                            String name, BigDecimal amount, Integer dueDay, Boolean active) {
-        FixedCost fixedCost = findOwned(fixedCostId, userId);
+    public FixedCost update(UUID fixedCostId, String name, BigDecimal amount,
+                            Integer dueDay, Boolean active) {
+        workspaceSecurity.requireWriteAccess();
+        FixedCost fixedCost = findOwned(fixedCostId);
         fixedCost.setName(name);
         fixedCost.setAmount(amount);
         fixedCost.setDueDay(dueDay);
@@ -52,23 +61,21 @@ public class FixedCostService {
     }
 
     @Transactional
-    public void delete(UUID fixedCostId, UUID userId) {
-        fixedCostRepository.delete(findOwned(fixedCostId, userId));
+    public void delete(UUID fixedCostId) {
+        workspaceSecurity.requireWriteAccess();
+        fixedCostRepository.delete(findOwned(fixedCostId));
     }
 
     @Transactional(readOnly = true)
-    public BigDecimal getTotalMonthly(UUID userId) {
-        return fixedCostRepository.findByUserIdAndActiveTrue(userId).stream()
+    public BigDecimal getTotalMonthly() {
+        return fixedCostRepository.findByWorkspaceIdAndActiveTrue(TenantContext.getWorkspaceId())
+                .stream()
                 .map(FixedCost::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private FixedCost findOwned(UUID fixedCostId, UUID userId) {
-        FixedCost fixedCost = fixedCostRepository.findById(fixedCostId)
+    private FixedCost findOwned(UUID fixedCostId) {
+        return fixedCostRepository.findByIdAndWorkspaceId(fixedCostId, TenantContext.getWorkspaceId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (!fixedCost.getUser().getId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        return fixedCost;
     }
 }

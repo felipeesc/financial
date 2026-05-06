@@ -1,6 +1,9 @@
 package com.financ.financial.loan;
 
-import com.financ.financial.user.UserRepository;
+import com.financ.financial.user.AuthenticatedUserResolver;
+import com.financ.financial.workspace.TenantContext;
+import com.financ.financial.workspace.WorkspaceRepository;
+import com.financ.financial.workspace.WorkspaceSecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,24 +22,27 @@ public class LoanService {
 
     private final LoanRepository loanRepository;
     private final LoanPaymentRepository loanPaymentRepository;
-    private final UserRepository userRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceSecurityService workspaceSecurity;
+    private final AuthenticatedUserResolver userResolver;
 
     @Transactional(readOnly = true)
-    public List<Loan> findAll(UUID userId) {
-        return loanRepository.findByUserIdOrderByLoanDateDesc(userId);
+    public List<Loan> findAll() {
+        return loanRepository.findByWorkspaceIdOrderByLoanDateDesc(TenantContext.getWorkspaceId());
     }
 
     @Transactional(readOnly = true)
-    public Loan findOwned(UUID loanId, UUID userId) {
-        return loanRepository.findByIdAndUserId(loanId, userId)
+    public Loan findOwned(UUID loanId) {
+        return loanRepository.findByIdAndWorkspaceId(loanId, TenantContext.getWorkspaceId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @Transactional
-    public Loan create(UUID userId, String borrowerName, String borrowerCpf,
+    public Loan create(String borrowerName, String borrowerCpf,
                        BigDecimal principalAmount, BigDecimal interestRate,
                        BigDecimal userRate, BigDecimal referrerRate,
                        String referrerName, LocalDate loanDate, LocalDate dueDate, String notes) {
+        workspaceSecurity.requireWriteAccess();
 
         if (userRate.add(referrerRate).compareTo(interestRate) != 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -44,7 +50,8 @@ public class LoanService {
         }
 
         Loan loan = Loan.builder()
-                .user(userRepository.getReferenceById(userId))
+                .user(userResolver.resolve())
+                .workspace(workspaceRepository.getReferenceById(TenantContext.getWorkspaceId()))
                 .borrowerName(borrowerName)
                 .borrowerCpf(borrowerCpf)
                 .principalAmount(principalAmount)
@@ -62,27 +69,30 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan markAsPaid(UUID loanId, UUID userId) {
-        Loan loan = findOwned(loanId, userId);
+    public Loan markAsPaid(UUID loanId) {
+        workspaceSecurity.requireWriteAccess();
+        Loan loan = findOwned(loanId);
         loan.setStatus("PAID");
         return loanRepository.save(loan);
     }
 
     @Transactional
-    public void delete(UUID loanId, UUID userId) {
-        loanRepository.delete(findOwned(loanId, userId));
+    public void delete(UUID loanId) {
+        workspaceSecurity.requireWriteAccess();
+        loanRepository.delete(findOwned(loanId));
     }
 
     @Transactional(readOnly = true)
-    public List<LoanPayment> findPayments(UUID loanId, UUID userId) {
-        findOwned(loanId, userId);
+    public List<LoanPayment> findPayments(UUID loanId) {
+        findOwned(loanId);
         return loanPaymentRepository.findByLoanIdOrderByPaymentDateDesc(loanId);
     }
 
     @Transactional
-    public LoanPayment registerPayment(UUID loanId, UUID userId,
-                                       LocalDate paymentDate, BigDecimal totalAmount, String notes) {
-        Loan loan = findOwned(loanId, userId);
+    public LoanPayment registerPayment(UUID loanId, LocalDate paymentDate,
+                                       BigDecimal totalAmount, String notes) {
+        workspaceSecurity.requireWriteAccess();
+        Loan loan = findOwned(loanId);
 
         BigDecimal userAmount;
         BigDecimal referrerAmount;
@@ -110,8 +120,9 @@ public class LoanService {
     }
 
     @Transactional
-    public void deletePayment(UUID loanId, UUID paymentId, UUID userId) {
-        findOwned(loanId, userId);
+    public void deletePayment(UUID loanId, UUID paymentId) {
+        workspaceSecurity.requireWriteAccess();
+        findOwned(loanId);
         LoanPayment payment = loanPaymentRepository.findByIdAndLoanId(paymentId, loanId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         loanPaymentRepository.delete(payment);

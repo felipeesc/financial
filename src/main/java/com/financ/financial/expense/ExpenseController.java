@@ -1,6 +1,5 @@
 package com.financ.financial.expense;
 
-import com.financ.financial.user.AuthenticatedUserResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,35 +16,34 @@ import java.util.UUID;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
-    private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
     public List<ExpenseResponse> findByMonth(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
-        return expenseService.findByMonth(userResolver.resolveId(), month);
+        return expenseService.findByMonth(month);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ExpenseResponse create(@Valid @RequestBody ExpenseRequest request) {
-        return ExpenseResponse.from(expenseService.create(userResolver.resolveId(), request));
+        return ExpenseResponse.from(expenseService.create(request));
     }
 
     @PutMapping("/{id}")
     public ExpenseResponse update(@PathVariable UUID id,
                                   @Valid @RequestBody ExpenseRequest request) {
-        return ExpenseResponse.from(expenseService.update(id, userResolver.resolveId(), request));
+        return ExpenseResponse.from(expenseService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
-        expenseService.delete(id, userResolver.resolveId());
+        expenseService.delete(id);
     }
 
     @GetMapping("/summary")
     public List<MonthlySummaryResponse> getMonthlySummary(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
-        return expenseService.getMonthlySummary(userResolver.resolveId(), month);
+        return expenseService.getMonthlySummary(month);
     }
 }

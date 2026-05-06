@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface LoanRepository extends JpaRepository<Loan, UUID> {
 
-    List<Loan> findByUserIdOrderByLoanDateDesc(UUID userId);
+    List<Loan> findByWorkspaceIdOrderByLoanDateDesc(UUID workspaceId);
 
-    Optional<Loan> findByIdAndUserId(UUID id, UUID userId);
+    Optional<Loan> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
 }

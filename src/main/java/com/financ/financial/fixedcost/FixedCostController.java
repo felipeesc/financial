@@ -1,6 +1,5 @@
 package com.financ.financial.fixedcost;
 
-import com.financ.financial.user.AuthenticatedUserResolver;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -21,11 +20,10 @@ import java.util.UUID;
 public class FixedCostController {
 
     private final FixedCostService fixedCostService;
-    private final AuthenticatedUserResolver userResolver;
 
     @GetMapping
     public List<FixedCostResponse> findAll() {
-        return fixedCostService.findAll(userResolver.resolveId()).stream()
+        return fixedCostService.findAll().stream()
                 .map(FixedCostResponse::from)
                 .toList();
     }
@@ -33,22 +31,22 @@ public class FixedCostController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FixedCostResponse create(@Valid @RequestBody CreateRequest request) {
-        return FixedCostResponse.from(fixedCostService.create(
-                userResolver.resolveId(), request.name(), request.amount(), request.dueDay()));
+        return FixedCostResponse.from(
+                fixedCostService.create(request.name(), request.amount(), request.dueDay()));
     }
 
     @PutMapping("/{id}")
     public FixedCostResponse update(@PathVariable UUID id,
                                     @Valid @RequestBody UpdateRequest request) {
-        return FixedCostResponse.from(fixedCostService.update(
-                id, userResolver.resolveId(),
-                request.name(), request.amount(), request.dueDay(), request.active()));
+        return FixedCostResponse.from(
+                fixedCostService.update(id, request.name(), request.amount(),
+                        request.dueDay(), request.active()));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
-        fixedCostService.delete(id, userResolver.resolveId());
+        fixedCostService.delete(id);
     }
 
     record CreateRequest(

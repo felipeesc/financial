@@ -23,7 +23,7 @@ export default function Navbar() {
 
   return (
     <nav style={styles.nav}>
-      <span style={styles.brand}>💰 Controle de Gastos</span>
+      <span style={styles.brand}> Controle de Gastos</span>
 
       <div className="nav-links-desktop">
         {NAV_LINKS.map(({ to, label }) => {
